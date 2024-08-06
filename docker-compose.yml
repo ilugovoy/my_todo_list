@@ -1,0 +1,74 @@
+version: '3'
+
+services:
+
+  database:
+    image: aeonix1992/my_todo_list_db:0
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - todo_vol:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready", "-U", "${DJANGO_SUPERUSER_USERNAME}"]
+# pg_isready — это утилита, которая входит в поставку PostgreSQL
+# Предназначена для проверки доступности сервера PostgreSQL
+# Она отправляет запрос на сервер PostgreSQL, чтобы убедиться, что он готов принимать подключения
+
+  backend:
+    image: aeonix1992/my_todo_list_backend:0
+    environment:
+      PG_HOST: ${PG_HOST}
+      PG_NAME: ${PG_NAME}
+      PG_USER: ${PG_USER}
+      PG_PASSWORD: ${PG_PASSWORD}
+    depends_on:
+      database:
+        condition: service_healthy
+
+  frontend:
+    image: aeonix1992/my_todo_list_frontend:0 
+    ports:
+      - 127.0.0.1:80:80
+    depends_on:
+      database:
+        condition: service_healthy
+      backend:
+        condition: service_started
+
+  backend-migrations:
+    image: aeonix1992/my_todo_list_backend:0 
+    environment:
+      PG_HOST: ${PG_HOST}
+      PG_NAME: ${PG_NAME}
+      PG_USER: ${PG_USER}
+      PG_PASSWORD: ${PG_PASSWORD}
+    command: bash -c "make migrate"
+    depends_on:
+      database:
+        condition: service_healthy
+      backend:
+        condition: service_started
+
+  backend-superuser:
+    image: aeonix1992/my_todo_list_backend:0
+    environment:
+      PG_HOST: ${PG_HOST}
+      PG_NAME: ${PG_NAME}
+      PG_USER: ${PG_USER}
+      PG_PASSWORD: ${PG_PASSWORD}
+      DJANGO_SUPERUSER_USERNAME: ${DJANGO_SUPERUSER_USERNAME}
+      DJANGO_SUPERUSER_PASSWORD: ${DJANGO_SUPERUSER_PASSWORD}
+      DJANGO_SUPERUSER_EMAIL: ${DJANGO_SUPERUSER_EMAIL}
+    command: bash -c "make create-superuser"
+    depends_on:
+      database:
+        condition: service_healthy
+      backend:
+        condition: service_started
+      backend-migrations:
+        condition: service_started
+
+volumes:
+  todo_vol:
