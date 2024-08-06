@@ -135,10 +135,10 @@ DJANGO_SUPERUSER_EMAIL=example@example.com
 </details>
 
 
-## Contributing
+## Участие
 
 Если вы обнаружили какие-либо проблемы или у вас есть предложения по улучшению, пожалуйста, создайте новый `issue` или отправьте `pull request`.
 
-## License
+## Лицензия
 
 Этот проект лицензирован [MIT License](LICENSE).
